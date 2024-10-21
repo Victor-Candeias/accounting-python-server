@@ -61,14 +61,17 @@ def register_user():
         description: Internal server error
     """
     try:
-        username = request.json.get('username')
-        password = request.json.get('password')
+        data = request.get_json()  # Get JSON data from the request
+        if not data or 'username' not in data or 'password' not in data:
+          return jsonify({"error": "Invalid input"}), 400  # Return error if input is invalid
+
+        username = data['username']
+        password = data['password']
+
+        username = username.lower()
 
         logging.info(f"register_user();username={username}")
         
-        if not username or not password:
-            return jsonify({"message": "Username and password are required"}), 400
-
         if not utilities.validate_password_rules(password):
             return jsonify({"message": "Password does not meet complexity requirements"}), 400
 
@@ -79,7 +82,12 @@ def register_user():
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
         new_user = {'name': username, 'password': hashed_password}
-        created_user = database.add_user(new_user)
+        
+        logging.info(f"register_user();new_user={new_user}")
+        
+        created_user = str(database.add_user(new_user))
+
+        logging.info(f"register_user();created_user={created_user}")
 
         return jsonify({"message": "User registered successfully", "user": created_user}), 201
     
@@ -116,19 +124,30 @@ def login_user():
         description: Internal server error
     """
     try:
-        username = request.json.get('username')
-        password = request.json.get('password')
-        
+        data = request.get_json()  # Get JSON data from the request
+        if not data or 'username' not in data or 'password' not in data:
+          return jsonify({"error": "Invalid input"}), 400  # Return error if input is invalid
+
+        username = data['username']
+        password = data['password']
+    
         logging.info(f"login_user();username={username}")
         
+        username = username.lower()
         user = database.get_user({'name': username})
         if not user:
             return jsonify({"message": "User not found"}), 400
 
+        logging.info(f"login_user();user={user}")
+
         password_bytes = password.encode('utf-8')
-        encryptPassword = user[0]['password'].encode('utf-8')
+        encryptPassword = user[0]['password']
+        
+        logging.info(f"login_user();encryptPassword={encryptPassword}")
         
         passwordMatch = bcrypt.checkpw(password_bytes, encryptPassword)
+        
+        logging.info(f"login_user();passwordMatch={passwordMatch}")
         
         if not passwordMatch:
             return jsonify({"message": "Incorrect password"}), 400
@@ -176,6 +195,8 @@ def get_data():
     try:
         filter_data = request.args.to_dict()
         logging.info(f"get_data();filter_data={filter_data}")
+        
+        all_data = None
         
         # Fetch all data using the singleton instance (database)
         if not filter_data:
@@ -230,17 +251,20 @@ def add_data():
         description: Internal server error
     """
     try:
-        content = request.json.get('content')
+        content = request.json.get('content', {})
         if not content:
             return jsonify({"message": "Content is required"}), 400
 
         logging.info(f"add_data()content={content}")
         
-        new_data_id = database.add_data({"content": content})  # Call method on the instance
+        # new_data_id = str(database.add_data({"content": content}))  # Call method on the instance
+        new_data_id = str(database.add_data(content))  # Call method on the instance
+        
+        logging.info(f"add_data()new_data_id={new_data_id}")
         
         return jsonify({"message": "Data added", "id": new_data_id}), 201
     except Exception as e:
-        print(f"Error adding data: {e}")
+        logging.info(f"Error adding data: {e}")
         return jsonify({"message": "Error adding data"}), 500
 
 # Define the route for deleting data by ID

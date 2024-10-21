@@ -154,4 +154,3 @@ class Utils:
             bool: True if the password meets the complexity requirements, False otherwise.
         """
         return self.complexity_rules.match(password) is not None
-

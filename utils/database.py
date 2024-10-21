@@ -79,11 +79,10 @@ class Database:
         """
         result = self.users.insert_one(user)
     
-        all_data_serialized = [self.serialize_data(item) for item in result] if result else []
+        # Insertion result log
+        logging.info(f"add_user();inserted_id={result.inserted_id}")
         
-        logging.info(f"add_user();all_data_serialized={all_data_serialized}")
-        
-        return all_data_serialized
+        return result.inserted_id
 
     # Retrieve users from the 'users' collection based on a filter
     def get_user(self, filter={}):
@@ -96,16 +95,24 @@ class Database:
         Returns:
             List of matching user documents.
         """
+        logging.info(f"get_user();filter={filter}")
+        
         result = list(self.users.find(filter))
         
+        logging.info(f"get_user();1.result={result}")
+        
+        returnResult = None
+        
+        # Verifica se a lista resultante não está vazia
         if result:
-            return []
+            # Serializa os dados dos usuários encontrados
+            returnResult = [self.serialize_data(user) for user in result]
+        else:
+            returnResult = []  # Retorna uma lista vazia se não encontrar usuários
         
-        all_data_serialized = [self.serialize_data(item) for item in result] if result else []
+        logging.info(f"get_user();returnResult={returnResult}")
         
-        logging.info(f"get_user();all_data_serialized={all_data_serialized}")
-        
-        return all_data_serialized
+        return returnResult
 
     # Add data to the 'data' collection
     def add_data(self, data):
@@ -118,13 +125,13 @@ class Database:
         Returns:
             The result of the insert operation.
         """
+        logging.info(f"add_data();data={data}")
+        
         result = self.data.insert_one(data)
         
-        all_data_serialized = [self.serialize_data(item) for item in result] if result else []
-
-        logging.info(f"add_data();all_data_serialized={all_data_serialized}")
+        logging.info(f"add_data();all_data_serialized={result.inserted_id}")
         
-        return all_data_serialized
+        return result.inserted_id
     
     # Retrieve all data or filter specific records from the 'data' collection
     def get_all_data(self, filter={}):
@@ -138,6 +145,8 @@ class Database:
             List of matching data documents.
         """
         result = list(self.data.find(filter))
+        
+        logging.info(f"get_all_data();result={result}")
         
         all_data_serialized = [self.serialize_data(item) for item in result] if result else []
         

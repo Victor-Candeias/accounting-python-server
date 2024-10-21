@@ -106,10 +106,20 @@ class TestApp(unittest.TestCase):
         mock_insert_result.inserted_id = 'mocked_id'
         mock_database.add_data.return_value = mock_insert_result
 
+        mockData = {
+            'description': 'description',
+            'value': '1000',
+            'entry': 'credit',
+            'user': 'user',
+            'day': '25',
+            'month': 'november',
+            'year': '2024',
+        }
+      
         # Simulate a valid POST request
         response = self.client.post(
             '/api/data',
-            data=json.dumps({'name': 'testdata'}),
+            data=json.dumps({'content': mockData}),
             content_type='application/json'
         )
         
