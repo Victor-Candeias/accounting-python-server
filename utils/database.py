@@ -189,12 +189,9 @@ class Database:
         """
         result = self.data.delete_one({"_id": ObjectId(id)})
         
-        all_data_serialized = [self.serialize_data(item) for item in result] if result else []
-        
-        logging.info(f"delete_data();all_data_serialized={all_data_serialized}")
+        logging.info(f"delete_data();result.deleted_count={result}")
 
-        return all_data_serialized
-
+        return result
 
     def serialize_data(self, data):
         """
@@ -214,18 +211,5 @@ class Database:
             return [self.serialize_data(item) for item in data]  # Recursively serialize list
         return data  # Return the original data if no conversion is needed
     
-    # Add a log entry to the 'logs' collection
-    # def add_log(self, log):
-    #     """
-    #     Insert a new log entry into the 'logs' collection.
-    #     
-    #     Args:
-    #         log (dict): The log data to be added.
-        
-    #     Returns:
-    #         The result of the insert operation.
-    #     """
-    #     return self.logs.insert_one(log)
-
 # Create a singleton instance of the Database class for use in the application
 database = Database()

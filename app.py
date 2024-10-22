@@ -65,10 +65,8 @@ def register_user():
         if not data or 'username' not in data or 'password' not in data:
           return jsonify({"error": "Invalid input"}), 400  # Return error if input is invalid
 
-        username = data['username']
+        username = data['username'].lower()
         password = data['password']
-
-        username = username.lower()
 
         logging.info(f"register_user();username={username}")
         
@@ -128,12 +126,11 @@ def login_user():
         if not data or 'username' not in data or 'password' not in data:
           return jsonify({"error": "Invalid input"}), 400  # Return error if input is invalid
 
-        username = data['username']
+        username = data['username'].lower()
         password = data['password']
     
         logging.info(f"login_user();username={username}")
         
-        username = username.lower()
         user = database.get_user({'name': username})
         if not user:
             return jsonify({"message": "User not found"}), 400
@@ -257,7 +254,6 @@ def add_data():
 
         logging.info(f"add_data()content={content}")
         
-        # new_data_id = str(database.add_data({"content": content}))  # Call method on the instance
         new_data_id = str(database.add_data(content))  # Call method on the instance
         
         logging.info(f"add_data()new_data_id={new_data_id}")
