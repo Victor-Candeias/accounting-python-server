@@ -30,9 +30,9 @@ class Utils:
         self.ENCRYPTION_KEY = hashlib.sha256(os.getenv("ENCRYPTION_KEY").encode()).digest()[:32]  # Generate a 32-byte encryption key
         self.IV_LENGTH = 16  # AES uses a 16-byte IV
         self.SALT_ROUNDS = 10  # Number of salt rounds (not used here but might be useful for future password hashing)
-        self.complexity_rules = re.compile(
-            r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
-        )  # Password complexity rule: requires uppercase, lowercase, number, special char, and 8+ chars
+        # self.complexity_rules = re.compile(
+        #     r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+        # )  # Password complexity rule: requires uppercase, lowercase, number, special char, and 8+ chars
 
     def create_token(self, user):
         """
@@ -143,14 +143,14 @@ class Utils:
         decryptPass = self.decrypt(encryptPassword)  # Decrypt the encrypted password
         return decryptPass == sendPassword  # Compare decrypted password with the provided plaintext password
 
-    def validate_password_rules(self, password):
-        """
-        Validates the password against the defined complexity rules.
+    # def validate_password_rules(self, password):
+    #    """
+    #    Validates the password against the defined complexity rules.
         
-        Args:
-            password (str): The password to validate.
+    #    Args:
+    #        password (str): The password to validate.
         
-        Returns:
-            bool: True if the password meets the complexity requirements, False otherwise.
-        """
-        return self.complexity_rules.match(password) is not None
+    #     Returns:
+    #        bool: True if the password meets the complexity requirements, False otherwise.
+    #    """
+    #    return self.complexity_rules.match(password) is not None

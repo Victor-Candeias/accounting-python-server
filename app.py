@@ -30,33 +30,47 @@ CORS(app)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 # Initialize Swagger
+# /apidocs
 swagger = Swagger(app)
 
-# Define the route for user registration
-# This endpoint will listen for POST requests at '/api/auth/register'
+# Define the route for user login
+# @swagger
+# POST /api/auth/login
+# This endpoint is used for user login.
+# It expects a JSON body with the following structure:
+# {
+#   "username": "user name",        # The username of the user (string)
+#   "password": "user password"     # The password of the user (string)
+# }
+# The request method for this endpoint is POST.
 @app.route('/api/auth/register', methods=['POST'])
 def register_user():
     """
-    Handles user registration.
+    Handles user login.
     ---
     tags:
       - Authentication
     parameters:
-      - name: username
-        in: body
-        type: string
-        required: true
-        description: The username for registration
-      - name: password
-        in: body
-        type: string
-        required: true
-        description: The password for registration
+      - in: body
+        name: body
+        description: JSON object containing username and password
+        schema:
+          type: object
+          required:
+            - username
+            - password
+          properties:
+            username:
+              type: string
+              example: "user name"
+            password:
+              type: string
+              example: "user password"
     responses:
-      201:
-        description: User registered successfully
+      200:
+        description: Successful login, returns JWT token
       400:
-        description: Username and password are required, or user already exists
+        description: Incorrect username or password
       500:
         description: Internal server error
     """
@@ -70,18 +84,13 @@ def register_user():
 
         logging.info(f"register_user();username={username}")
         
-        if not utilities.validate_password_rules(password):
-            return jsonify({"message": "Password does not meet complexity requirements"}), 400
-
         user_exists = database.get_user({'name': username})
         if user_exists:
             return jsonify({"message": "User already exists"}), 400
 
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        new_user = {'name': username, 'password': password}
         
-        new_user = {'name': username, 'password': hashed_password}
-        
-        logging.info(f"register_user();new_user={new_user}")
+        logging.info(f"register_user();new_user={str(new_user)}")
         
         created_user = str(database.add_user(new_user))
 
@@ -93,31 +102,44 @@ def register_user():
         logging.error(f"register_user();Registration error: {e}")
         return jsonify({"message": "Internal server error"}), 500
 
-# Define the route for user login
-# This endpoint will listen for POST requests at '/api/auth/login'
+# Define the route for user registration
+# @swagger
+# POST /api/auth/register
+# This endpoint is used for user registration.
+# It expects a JSON body with the following structure:
+# {
+#   "username": "user name",        # The username of the user (string)
+#   "password": "user password",     # The password of the user (string)
+# }
+# The request method for this endpoint is POST.
 @app.route('/api/auth/login', methods=['POST'])
 def login_user():
     """
-    Handles user login.
+    Handles user registration.
     ---
     tags:
       - Authentication
     parameters:
-      - name: username
-        in: body
-        type: string
-        required: true
-        description: The username for login
-      - name: password
-        in: body
-        type: string
-        required: true
-        description: The password for login
+      - in: body
+        name: body
+        description: JSON object containing user, password, and optional email
+        schema:
+          type: object
+          required:
+            - username
+            - password
+          properties:
+            username:
+              type: string
+              example: "user name"
+            password:
+              type: string
+              example: "user password"
     responses:
-      200:
-        description: Successful login, returns JWT token
+      201:
+        description: User registered successfully
       400:
-        description: Incorrect username or password
+        description: Username and password are required, or user already exists
       500:
         description: Internal server error
     """
@@ -137,7 +159,7 @@ def login_user():
 
         logging.info(f"login_user();user={user}")
 
-        password_bytes = password.encode('utf-8')
+        password_bytes = password #.encode('utf-8')
         encryptPassword = user[0]['password']
         
         logging.info(f"login_user();encryptPassword={encryptPassword}")
@@ -158,20 +180,37 @@ def login_user():
         return jsonify({"message": "Internal server error"}), 500
 
 # Define the route for retrieving data
-# This endpoint will handle GET requests at '/api/data'
+# @swagger
+# GET /api/data
+# This endpoint retrieves data based on optional query parameters.
+# Query parameters (optional):
+#   - Any field (like "name", "type", etc.) to filter the data.
+# Example request:
+#   GET /api/data?name=value&age=30
+# Response:
+#   200 OK: Returns a JSON array of the filtered data.
+#   500 Internal Server Error: If there is an error processing the request.
 @app.route('/api/data', methods=['GET'])
 def get_data():
     """
-    Handles retrieval of data.
+    Retrieves data based on optional filters.
     ---
     tags:
       - Data
     parameters:
-      - name: filter_data
+      - name: filters
         in: query
         type: object
+        description: Optional query parameters to filter data
         required: false
-        description: Filters to be applied for fetching data
+        schema:
+          type: object
+          additionalProperties:
+            type: string
+        example:
+          username: "example_name"
+          month: "09"
+          year: "2024"
     responses:
       200:
         description: A list of data items
@@ -210,8 +249,24 @@ def get_data():
         logging.error(f"get_data();Error retrieving data: {e}")
         return jsonify({"message": "Error retrieving data"}), 500
 
-# Define the route for adding data
-# This endpoint will handle POST requests at '/api/data'
+# Define the route for adding new data
+# @swagger
+# POST /api/data
+# This endpoint allows adding new data to the database.
+# The request body must contain a JSON object with the following structure:
+# {
+#   "content": "some content"  # The content to be added (string)
+# }
+# Example request:
+#   POST /api/data
+#   Body:
+#   {
+#     "content": "This is the content to be added."
+#   }
+# Responses:
+#   201 Created: Data added successfully with a unique ID.
+#   400 Bad Request: If the 'content' field is missing or empty.
+#   500 Internal Server Error: If an error occurs while adding data.
 @app.route('/api/data', methods=['POST'])
 def add_data():
     """
@@ -220,16 +275,18 @@ def add_data():
     tags:
       - Data
     parameters:
-      - name: content
-        in: body
-        required: true
+      - in: body
+        name: body
+        description: JSON object containing the data to be added
         schema:
           type: object
+          required:
+            - content
           properties:
             content:
               type: string
               description: The content to be added
-        description: The JSON object containing the data to be added
+              example: "This is some content to add"
     responses:
       201:
         description: Data added successfully
@@ -244,8 +301,20 @@ def add_data():
               description: The ID of the added data
       400:
         description: Content is required
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              description: Error message
       500:
         description: Internal server error
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              description: Error message
     """
     try:
         content = request.json.get('content', {})
@@ -264,12 +333,21 @@ def add_data():
         return jsonify({"message": "Error adding data"}), 500
 
 # Define the route for deleting data by ID
-# This endpoint will handle DELETE requests at '/api/data/<string:id>'
-# The '<string:id>' is a route parameter used to identify the specific data to delete
+# @swagger
+# DELETE /api/data/{id}
+# This endpoint deletes data by its unique ID.
+# Path Parameter:
+#   - id: The ID of the data to be deleted (string).
+# Example request:
+#   DELETE /api/data/12345
+# Responses:
+#   204 No Content: Data deleted successfully, no content returned.
+#   404 Not Found: If the data with the given ID does not exist.
+#   500 Internal Server Error: If an error occurs while processing the request.
 @app.route('/api/data/<string:id>', methods=['DELETE'])
 def delete_data(id):
     """
-    Handles data deletion by ID.
+    Deletes data by ID.
     ---
     tags:
       - Data
@@ -284,8 +362,20 @@ def delete_data(id):
         description: Data deleted successfully (no content returned)
       404:
         description: Data not found
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              description: Error message
       500:
         description: Internal server error
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              description: Error message
     """
     try:
         logging.info(f"delete_data()id={id}")
