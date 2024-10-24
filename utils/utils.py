@@ -24,15 +24,9 @@ class Utils:
         Initializes the Utils class by loading encryption settings and password complexity rules.
         - ENCRYPTION_KEY: 32-byte encryption key derived from an environment variable.
         - IV_LENGTH: Length of the initialization vector (IV) for AES encryption.
-        - SALT_ROUNDS: Number of salt rounds used for password hashing.
-        - complexity_rules: Regular expression for validating password complexity.
         """
         self.ENCRYPTION_KEY = hashlib.sha256(os.getenv("ENCRYPTION_KEY").encode()).digest()[:32]  # Generate a 32-byte encryption key
         self.IV_LENGTH = 16  # AES uses a 16-byte IV
-        self.SALT_ROUNDS = 10  # Number of salt rounds (not used here but might be useful for future password hashing)
-        # self.complexity_rules = re.compile(
-        #     r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
-        # )  # Password complexity rule: requires uppercase, lowercase, number, special char, and 8+ chars
 
     def create_token(self, user):
         """
@@ -46,7 +40,7 @@ class Utils:
         """
         payload = {
             'id': user[0]['_id'],  # MongoDB user ID
-            'username': user[0]['name']  # Username
+            'username': user[0]['username']  # Username
         }
         secret_key = os.getenv("ENCRYPTION_KEY")  # Retrieve the secret key from environment variables
         token = jwt.encode(payload, secret_key, algorithm="HS256")  # Sign the JWT using HMAC and SHA-256
@@ -142,15 +136,3 @@ class Utils:
         """
         decryptPass = self.decrypt(encryptPassword)  # Decrypt the encrypted password
         return decryptPass == sendPassword  # Compare decrypted password with the provided plaintext password
-
-    # def validate_password_rules(self, password):
-    #    """
-    #    Validates the password against the defined complexity rules.
-        
-    #    Args:
-    #        password (str): The password to validate.
-        
-    #     Returns:
-    #        bool: True if the password meets the complexity requirements, False otherwise.
-    #    """
-    #    return self.complexity_rules.match(password) is not None

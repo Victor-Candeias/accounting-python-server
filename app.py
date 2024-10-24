@@ -59,6 +59,7 @@ def register_user():
           required:
             - username
             - password
+            - role
           properties:
             username:
               type: string
@@ -66,6 +67,9 @@ def register_user():
             password:
               type: string
               example: "user password"
+            role:
+              type: string
+              example: "user"
     responses:
       200:
         description: Successful login, returns JWT token
@@ -76,11 +80,12 @@ def register_user():
     """
     try:
         data = request.get_json()  # Get JSON data from the request
-        if not data or 'username' not in data or 'password' not in data:
+        if not data or 'username' not in data or 'password' not in data or 'role' not in data:
           return jsonify({"error": "Invalid input"}), 400  # Return error if input is invalid
 
         username = data['username'].lower()
         password = data['password']
+        role = data['role']
 
         logging.info(f"register_user();username={username}")
         
@@ -88,7 +93,7 @@ def register_user():
         if user_exists:
             return jsonify({"message": "User already exists"}), 400
 
-        new_user = {'name': username, 'password': password}
+        new_user = {'username': username, 'password': password, 'role': role}
         
         logging.info(f"register_user();new_user={str(new_user)}")
         
@@ -153,13 +158,13 @@ def login_user():
     
         logging.info(f"login_user();username={username}")
         
-        user = database.get_user({'name': username})
+        user = database.get_user({'username': username})
         if not user:
             return jsonify({"message": "User not found"}), 400
 
         logging.info(f"login_user();user={user}")
 
-        password_bytes = password #.encode('utf-8')
+        password_bytes = password
         encryptPassword = user[0]['password']
         
         logging.info(f"login_user();encryptPassword={encryptPassword}")
