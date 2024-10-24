@@ -3,4 +3,6 @@
 /venv
 /__pycache__
 *.log
+.env*
+
 __pycache__/
