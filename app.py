@@ -93,7 +93,10 @@ def register_user():
         if user_exists:
             return jsonify({"message": "User already exists"}), 400
 
-        new_user = {'username': username, 'password': password, 'role': role}
+        # encrypt password
+        hasedPassword = utilities.hash_password(password)
+
+        new_user = {'username': username, 'password': hasedPassword, 'role': role}
         
         logging.info(f"register_user();new_user={str(new_user)}")
         
@@ -157,20 +160,17 @@ def login_user():
         password = data['password']
     
         logging.info(f"login_user();username={username}")
-        
+
         user = database.get_user({'username': username})
         if not user:
             return jsonify({"message": "User not found"}), 400
 
         logging.info(f"login_user();user={user}")
 
-        password_bytes = password
         encryptPassword = user[0]['password']
         
-        logging.info(f"login_user();encryptPassword={encryptPassword}")
-        
-        passwordMatch = bcrypt.checkpw(password_bytes, encryptPassword)
-        
+        passwordMatch = utilities.validate_password(encryptPassword, password)
+
         logging.info(f"login_user();passwordMatch={passwordMatch}")
         
         if not passwordMatch:

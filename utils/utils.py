@@ -3,6 +3,7 @@ import re  # For regular expressions, used for password complexity rules
 import logging  # For logging messages and errors
 import base64  # For encoding data
 import hashlib  # For creating cryptographic hash values
+from bcrypt import checkpw, gensalt, hashpw
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes  # For AES encryption/decryption
 from cryptography.hazmat.backends import default_backend  # For selecting the default cryptographic backend
 import jwt  # For creating and verifying JSON Web Tokens (JWTs)
@@ -122,6 +123,12 @@ class Utils:
         # Remove padding
         padding_length = decrypted[-1]
         return decrypted[:-padding_length].decode('utf-8')
+
+    def hash_password(self, password):
+        return hashpw(password.encode(), gensalt()).decode()
+
+    def validate_password(self, stored_hash, entered_password):
+        return checkpw(entered_password.encode(), stored_hash.encode())
 
     def validatePassword(self, encryptPassword, sendPassword):
         """
